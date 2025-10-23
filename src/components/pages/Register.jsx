@@ -1,16 +1,28 @@
-import React, { use } from 'react';
-import { Link } from 'react-router';
+import React, { use, useState } from 'react';
+import { Link, useNavigate } from 'react-router';
 import { AuthContext } from '../../provider/AuthProvider';
 
 const Register = () => {
 
-    const { createUser, setUser } = use(AuthContext)
+    const [nameError, setNameError] = useState("");
+
+    const { createUser, setUser, updateUser } = use(AuthContext)
+
+    const navigate = useNavigate();
 
     const handleRegister = (e) => {
         e.preventDefault();
 
         const form = e.target;
         const name = form.name.value;
+
+        if (name.length < 3) {
+            setNameError("Name should be more than 3 character")
+            return;
+        }
+        else {
+            setNameError("");
+        }
         const photo = form.photo.value;
         const email = form.email.value;
         const password = form.password.value;
@@ -20,7 +32,15 @@ const Register = () => {
         createUser(email, password)
             .then(result => {
                 const user = result.user;
-                setUser(user)
+                updateUser({ displayName: name, photoURL: photo }).then(() => {
+                    setUser({ ...user, displayName: name, photoURL: photo })
+                    navigate("/")
+                })
+                .catch(error => {
+                    console.log(error);
+                    setUser(user)
+                })
+
             })
             .catch(error => {
                 const errorCode = error.code;
@@ -40,6 +60,10 @@ const Register = () => {
                         {/* Name */}
                         <label className="label">Name</label>
                         <input type="text" name='name' className="input" placeholder="Name" required />
+
+                        {
+                            nameError && <p className='text-xs text-error'>{nameError}</p>
+                        }
                         {/* Photo URL */}
                         <label className="label">Photo URL</label>
                         <input type="text" name='photo' className="input" placeholder="Photo URL" required />
